@@ -482,12 +482,20 @@ var tc_class = {
                                         required: false,
                                         onFineChange: function () {
                                             if ($(sender.id(fnn)).val() == '')
-                                                //sender.record['color'] = '';
-                                                sender.record['Color'] = '';
+                                            {
+                                                if (app.isP)
+                                                    sender.record['color'] = '';
+                                                else    
+                                                    sender.record['Color'] = '';
+                                            }        
                                             else {
                                                 let c = (255 << 24 | Math.round(sender.Color.rgb[0]) << 16 | Math.round(sender.Color.rgb[1]) << 8 | Math.round(sender.Color.rgb[2]));
-                                                //sender.record['color'] = c;
-                                                sender.record['Color'] = c;
+                                                {
+                                                if (app.isP)
+                                                    sender.record['color'] = c;
+                                                else    
+                                                    sender.record['Color'] = c;
+                                                }    
                                             }
                                             sender.flagEdit = true;
                                         }
