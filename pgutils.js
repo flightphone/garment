@@ -1,5 +1,6 @@
 var { isNullOrUndefined } = require('util');
 var fs = require('fs');
+var SessA;
 
 
 var pool;
@@ -7,6 +8,10 @@ exports.setDB = function (pl) {
   pool = pl;
 }
 
+exports.setSess = function (s)
+{
+    SessA = s;
+}
 
 
 
@@ -132,22 +137,7 @@ exports.getid = async function (req, res) {
   });
 }
 
-function adminCheck(sql, account) {
-  var res = false;
-  if (account != 'Admin') {
-    if (sql.toLowerCase().indexOf('_ntusers') > -1)
-      res = true;
-    else {
-      sqls = sql.split(';');
-      for (var i = 0; i < sqls.length; i++) {
-        if (sqls[i].trim().toLowerCase().substr(0, 6) != 'select')
-          res = true;
-        break;
-      }
-    }
-  }
-  return res;
-}
+
 async function extrun(req, res) {
   var sql = req.body.sql;
   var IdDeclare = req.body.IdDeclare;
@@ -155,33 +145,12 @@ async function extrun(req, res) {
     res.send({ message: 'Пустая строка sql' });
     return;
   };
-  var account = req.body.account;
-  var password = req.body.password;
-
-  if (account == null)
-    account = '';
-  if (password == null)
-    password = '';
-
-
-  /*
-    if (!account || !password) {
+  var account = SessA.get(req.sessionID);
+    if (!account) {
       res.send({ message: 'Access denied.' });
       return;
     };
-  */
-  account = account.replace("'", "''");
-  password = password.replace("'", "''");
   
-  /*
-  var sqlcheck = 'select username from t_ntusers where username = $1 and pass = $2';
-
-  var recheck = await pool.query(sqlcheck, [account, password]);
-  if (recheck.rows.length == 0) {
-    res.send({ message: 'Access denied.' });
-    return;
-  }
-  */
 
 
 
@@ -198,13 +167,7 @@ async function extrun(req, res) {
     sql = sql.replace(/\(NOLOCK\)/g, '');
     sql = sql.replace(/\[Account\]/g, account);
   
-  //проверка неразрешенных sql комманд
-  /*
-  if (adminCheck(sql, account)) {
-    res.send({ message: 'Access denied.' });
-    return;
-  }
-  */
+  
 
 
   var total = 0;
@@ -471,9 +434,8 @@ exports.dump = function (req, res) {
 
 exports.gettables = function (req, res) {
 
-  var account = req.body.account;
-  var password = req.body.password;
-  if (!account || !password) {
+  var account = SessA.get(req.sessionID);
+  if (!account) {
     res.send([{ text: 'Access denied.' }]);
     return;
   };

@@ -1,5 +1,7 @@
 var express = require('express');
+var app = express();
 var bodyParser = require('body-parser');
+var session = require('express-session')
 var multer = require('multer');
 var upload = multer();
 
@@ -18,32 +20,43 @@ var pool = new Pool({
   port: process.env.PGPORT || 5432,
 });
 
+var SessA = new Map();
 
 var pgadmin = require('./pgutils');
 pgadmin.setDB(pool);
-
+pgadmin.setSess(SessA);
 
 var ustore = require('./ustore');
 ustore.setDB(pool);
+ustore.setSess(SessA);
 
 /*
 var print = require('./print');
 print.setDB(pool);
 */
 
-var app = express();
+
 app.set('views', './views');
 app.set('view engine', 'ejs');
 
 
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(
+  session({
+    secret: 'secret session id',
+    saveUninitialized: true
+  })
+)
+
+
 
 
 
 app.use(express.static('dist'));
-app.post('/pg/gettables', pgadmin.gettables);
 
+
+app.post('/pg/gettables', pgadmin.gettables);
 app.post('/pg/runsql', upload.fields([]), pgadmin.runSQL);
 app.get('/pg/getid/:table_name', pgadmin.getid);
 app.post('/pg/dump', upload.fields([]), pgadmin.dump);
@@ -60,15 +73,11 @@ app.post('/pg/csv', upload.fields([]), pgadmin.csvimport);
 
 app.post('/ustore/gettree', ustore.gettree);
 app.get('/ustore/tree.css', ustore.treecss)
-/*
-app.get('/po/print/:id', function (req, res) {
 
-  var id = req.params['id'];
-  var sqls = 'select * from v_porderh where po_pk = ' + id + ';select * from v_porderd where pd_po = ' + id;
-  print.print('porder.ods', sqls, 'porder_' + id + '.ods', res);
-
+app.get('/sesid', function (req, res) {
+  res.send(req.sessionID);
 });
-*/
+
 
 
 app.listen(port, function () {

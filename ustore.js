@@ -3,11 +3,16 @@ var pgu = require('./pgutils');
 var fs = require('fs');
 //var XLSX = require('xlsx');
 var pool;
+var SessA;
 
 exports.setDB = function (pl) {
     pool = pl;
 }
 
+exports.setSess = function (s)
+{
+    SessA = s;
+}
 
 
 function CreateItems(Root, Mn, Tab) {
@@ -64,6 +69,9 @@ exports.gettree = async function (req, res) {
         res.send([{ text: 'Access denied.' }]);
         return;
     }
+    //Запоминаем Account
+    SessA.set(req.sessionID, account);
+
     pool.query("select a.* , fn_getmenuimageid(a.caption) idimage from fn_mainmenu('ALL', $1) a order by a.ordmenu, idmenu", [account], (err, result) => {
         var rootItem = { text: 'root' };
         CreateItems('Root/', rootItem, result.rows);
